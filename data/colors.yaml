@@ -1,0 +1,23 @@
+body:
+  - id: black
+    label: Black
+    hex: "#111111"
+  - id: cyan-glow
+    label: Cyan Glow
+    hex: "#a7f5ff"
+    effect: glow
+  - id: marble-wt
+    label: Marble White
+    hex: "#eeeeee"
+    effect: marble
+text:
+  - id: white
+    label: White
+    hex: "#ffffff"
+  - id: black
+    label: Black
+    hex: "#111111"
+rules:
+  incompat:
+    - body: cyan-glow
+      text: white

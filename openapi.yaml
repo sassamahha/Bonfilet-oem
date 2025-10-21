@@ -1,0 +1,114 @@
+openapi: 3.0.3
+info:
+  title: Bonfilet API
+  version: 0.1.0
+paths:
+  /api/quote:
+    post:
+      summary: Generate an instant quote for a Bonfilet configuration.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuoteInput'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuoteResult'
+components:
+  schemas:
+    QuoteInput:
+      type: object
+      required:
+        - items
+        - shipTo
+      properties:
+        currency:
+          type: string
+          example: USD
+        items:
+          type: array
+          items:
+            type: object
+            required:
+              - productType
+              - messageText
+              - bodyColor
+              - textColor
+              - finish
+              - size
+              - qty
+            properties:
+              productType:
+                type: string
+                enum:
+                  - bonfilet
+              messageText:
+                type: string
+                maxLength: 80
+              font:
+                type: string
+              bodyColor:
+                type: string
+              textColor:
+                type: string
+              finish:
+                type: string
+                enum:
+                  - normal
+                  - glow
+                  - marble
+                  - pvc
+              size:
+                type: string
+                example: 12mm/202mm
+              qty:
+                type: integer
+                minimum: 1
+              options:
+                type: array
+                items:
+                  type: string
+        shipTo:
+          type: object
+          properties:
+            country:
+              type: string
+            postal:
+              type: string
+            state:
+              type: string
+            city:
+              type: string
+    QuoteResult:
+      type: object
+      properties:
+        currency:
+          type: string
+        subtotal:
+          type: number
+        shipping:
+          type: number
+        tax:
+          type: number
+        duties:
+          type: number
+        total:
+          type: number
+        etaDays:
+          type: array
+          items:
+            type: integer
+          example:
+            - 5
+            - 9
+        needsReview:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
