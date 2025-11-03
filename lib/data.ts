@@ -15,7 +15,6 @@ export type PricingConfig = {
     size: Record<string, number>;
   };
   options: Record<string, number>;
-  currency: string;
 };
 
 export type ColorConfig = {
