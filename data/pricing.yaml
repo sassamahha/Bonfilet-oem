@@ -1,5 +1,3 @@
-market: jp
-currency: JPY
 tiers:
   - min: 1
     max: 9
