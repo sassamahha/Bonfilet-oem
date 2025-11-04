@@ -26,4 +26,3 @@ coeff:
     "12mm/210mm": 1.05
 options:
   individual_pack: 0.05
-  backing_card: 0.12
