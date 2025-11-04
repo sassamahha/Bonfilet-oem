@@ -1,0 +1,39 @@
+{
+  "nav": {
+    "order": "Configurator",
+    "checkout": "Checkout",
+    "orders": "Orders"
+  },
+  "hero": {
+    "title": "Instant Bonfilet OEM ordering",
+    "subtitle": "Type your message, choose colors, get live pricing & arrival dates."
+  },
+  "cta": {
+    "configure": "Start configuring",
+    "viewPricing": "View pricing tiers"
+  },
+  "order": {
+    "title": "Customize your Bonfilet",
+    "message": "Message",
+    "quantity": "Quantity",
+    "font": "Font",
+    "bodyColor": "Body color",
+    "textColor": "Text color",
+    "finish": "Finish",
+    "size": "Size",
+    "options": "Options",
+    "preview": "Preview",
+    "quote": "Estimated totals",
+    "arrival": "Estimated arrival",
+    "forbidden": "Message requires manual review due to restricted words.",
+    "lengthError": "Message must be 40 characters or fewer.",
+    "placeholder": "ONE TEAM, ONE MESSAGE"
+  },
+  "quote": {
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "tax": "Tax",
+    "duties": "Duties",
+    "total": "Total"
+  }
+}
