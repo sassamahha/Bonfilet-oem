@@ -1,3 +1,4 @@
+
 export type QuoteItemInput = {
   qty: number;
   finish: string;
@@ -28,10 +29,11 @@ export function calculateOptions(config: PricingConfig, options: string[] = [], 
   }, 0);
 }
 
+
     subtotal,
     shipping,
     tax,
     duties,
     total
   };
-}
+

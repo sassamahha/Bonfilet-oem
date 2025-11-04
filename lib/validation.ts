@@ -28,4 +28,3 @@ export async function validateMessage(message: string): Promise<MessageValidatio
     needsReview,
     errors
   };
-}

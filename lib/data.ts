@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import YAML from 'yaml';
 
+
 export type PricingTier = {
   min: number;
   max: number;
@@ -9,6 +10,7 @@ export type PricingTier = {
 };
 
 export type PricingConfig = {
+
   tiers: PricingTier[];
   coeff: {
     finish: Record<string, number>;
@@ -31,6 +33,7 @@ export type LeadTimeEntry = {
 };
 
 export type LeadTimeConfig = {
+
   base_production_days: number;
   country_zone: Record<string, LeadTimeEntry>;
   eta_formula: string;
