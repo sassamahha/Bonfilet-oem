@@ -1,7 +1,3 @@
-import { getPricingConfig } from './data';
-import type { PricingConfig } from './data';
-import type { ParsedQuoteRequest } from './validation';
-
 export type QuoteItemInput = {
   qty: number;
   finish: string;
@@ -32,34 +28,9 @@ export function calculateOptions(config: PricingConfig, options: string[] = [], 
   }, 0);
 }
 
-export async function calculatePrice(input: ParsedQuoteRequest): Promise<QuoteBreakdown> {
-  const config = await getPricingConfig();
-  const item = input.items[0];
-  const quoteInput: QuoteItemInput = {
-    qty: item.qty,
-    finish: item.finish,
-    size: item.size,
-    options: item.options
-  };
-  const currency = input.currency ?? config.currency ?? 'JPY';
-  const shipping = 25 + Math.max(0, item.qty - 30) * 0.15;
-  const taxRate = 0.1;
-  const dutiesRate = 0.05;
-
-  const unit = calculateUnitPrice(config, quoteInput);
-  const optionsTotal = calculateOptions(config, quoteInput.options, quoteInput.qty);
-  const subtotal = unit * quoteInput.qty + optionsTotal;
-  const tax = subtotal * taxRate;
-  const duties = subtotal * dutiesRate;
-  const total = subtotal + shipping + tax + duties;
-
-  return {
-    currency,
     subtotal,
     shipping,
     tax,
     duties,
     total
   };
-}
-
