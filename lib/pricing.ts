@@ -1,4 +1,3 @@
-
 export type QuoteItemInput = {
   qty: number;
   finish: string;

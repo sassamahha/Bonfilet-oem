@@ -1,4 +1,3 @@
-
   const normalizedCountry = country.toUpperCase();
   const entry = config.country_zone[normalizedCountry];
   const base = config.base_production_days;
