@@ -1,0 +1,36 @@
+import type { Metadata } from 'next';
+import { getMessages } from 'next-intl/server';
+import { NextIntlClientProvider } from 'next-intl';
+import type { Locale } from '@/lib/i18n';
+import { localeNames } from '@/lib/i18n';
+import Navigation from '@/components/navigation';
+
+export const metadata: Metadata = {
+  title: 'Bonfilet OEM Ordering',
+  description: 'Instantly configure and order personalized Bonfilet bands.'
+};
+
+export default async function LocaleLayout({
+  children,
+  params
+}: {
+  children: React.ReactNode;
+  params: { locale: Locale };
+}) {
+  const messages = await getMessages();
+
+  return (
+    <NextIntlClientProvider locale={params.locale} messages={messages}>
+      <div className="flex min-h-screen flex-col">
+        <Navigation currentLocale={params.locale} localeNames={localeNames} />
+        <main className="flex-1">{children}</main>
+        <footer className="border-t border-slate-200 bg-slate-50 py-8 text-sm text-slate-500">
+          <div className="mx-auto flex max-w-5xl flex-col gap-2 px-6">
+            <span>© {new Date().getFullYear()} Bonfilet OEM</span>
+            <span className="text-slate-400">Built for instant team merch ordering worldwide.</span>
+          </div>
+        </footer>
+      </div>
+    </NextIntlClientProvider>
+  );
+}

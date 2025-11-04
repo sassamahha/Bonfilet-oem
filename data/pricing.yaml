@@ -1,0 +1,31 @@
+market: jp
+currency: JPY
+tiers:
+  - min: 1
+    max: 9
+    unit: 4.0
+  - min: 10
+    max: 29
+    unit: 2.5
+  - min: 30
+    max: 99
+    unit: 1.8
+  - min: 100
+    max: 299
+    unit: 1.2
+  - min: 300
+    max: 999
+    unit: 0.95
+coeff:
+  finish:
+    normal: 1.0
+    glow: 1.15
+    marble: 1.12
+    pvc: 1.25
+  size:
+    "12mm/180mm": 1.0
+    "12mm/202mm": 1.03
+    "12mm/210mm": 1.05
+options:
+  individual_pack: 0.05
+  backing_card: 0.12
