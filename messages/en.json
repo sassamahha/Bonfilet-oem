@@ -12,6 +12,15 @@
     "configure": "Start configuring",
     "viewPricing": "View pricing tiers"
   },
+  "pricing": {
+    "title": "Pricing tiers",
+    "subtitle": "Unit prices are denominated in Japanese Yen. Other currencies update automatically using reference FX rates.",
+    "rangeHeader": "Quantity",
+    "currencyHeader": "Unit price ({currency})",
+    "rangeLabel": "{min} – {max} units",
+    "rangeLabelOpen": "{min}+ units",
+    "disclaimer": "Converted amounts are estimates. Final billing depends on your settlement currency."
+  },
   "order": {
     "title": "Customize your Bonfilet",
     "message": "Message",
