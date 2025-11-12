@@ -12,6 +12,15 @@
     "configure": "カスタマイズを始める",
     "viewPricing": "価格表を見る"
   },
+  "pricing": {
+    "title": "価格表",
+    "subtitle": "単価は日本円ベースです。為替レートに基づき各通貨へ自動換算します。",
+    "rangeHeader": "数量",
+    "currencyHeader": "単価（{currency}）",
+    "rangeLabel": "{min}〜{max} 本",
+    "rangeLabelOpen": "{min}本以上",
+    "disclaimer": "換算額は目安です。実際の請求額は決済時のレートにより異なる場合があります。"
+  },
   "order": {
     "title": "ボンフィレットをカスタマイズ",
     "message": "メッセージ",
