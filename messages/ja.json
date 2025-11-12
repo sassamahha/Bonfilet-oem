@@ -5,8 +5,8 @@
     "orders": "注文一覧"
   },
   "hero": {
-    "title": "ボンフィレットOEMを即時発注",
-    "subtitle": "メッセージ入力とカラー選択ですぐに価格と到着予定日を確認。"
+    "title": "ボンフィレットを即時発注",
+    "subtitle": "メッセージ入力とカラー選択で、価格と到着予定をその場で確認。"
   },
   "cta": {
     "configure": "カスタマイズを始める",
@@ -15,25 +15,22 @@
   "order": {
     "title": "ボンフィレットをカスタマイズ",
     "message": "メッセージ",
-    "quantity": "数量",
-    "font": "フォント",
     "bodyColor": "本体カラー",
     "textColor": "文字カラー",
-    "finish": "仕上げ",
-    "size": "サイズ",
-    "options": "オプション",
-    "preview": "プレビュー",
-    "quote": "概算見積",
-    "arrival": "到着目安",
-    "forbidden": "禁止ワードが含まれるため、手動承認が必要です。",
-    "lengthError": "メッセージは40文字以内で入力してください。",
+    "quantity": "数量",
+    "arrival": "配送先（国コード）",
+    "charsLeft": "残り {count} 文字",
     "placeholder": "ONE TEAM, ONE MESSAGE"
   },
   "quote": {
+    "panelTitle": "見積（自動）",
     "subtotal": "小計",
     "shipping": "送料",
-    "tax": "税",
-    "duties": "関税",
-    "total": "合計"
+    "tax": "税関/関税",
+    "total": "合計",
+    "eta": "{from} 〜 {to}",
+    "checkout": "チェックアウトへ進む",
+    "empty": "フォームを入力すると見積が表示されます。",
+    "updating": "更新中…"
   }
 }

@@ -17,3 +17,11 @@ a {
 button {
   @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-accent focus-visible:ring-offset-2;
 }
+
+/* Japanese-capable fonts */
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700&family=Kosugi+Maru&display=swap");
+
+:root{
+  --band-font-sans: "Noto Sans JP", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  --band-font-rounded: "Kosugi Maru", "Noto Sans JP", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+}
