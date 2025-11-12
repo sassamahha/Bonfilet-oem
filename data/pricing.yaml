@@ -1,19 +1,31 @@
+currency: JPY
 tiers:
-  - min: 1
-    max: 9
-    unit: 4.0
-  - min: 10
-    max: 29
-    unit: 2.5
-  - min: 30
-    max: 99
-    unit: 1.8
-  - min: 100
-    max: 299
-    unit: 1.2
-  - min: 300
-    max: 999
-    unit: 0.95
+  - { min: 10,  max: 14,  unit: 1800 }
+  - { min: 15,  max: 19,  unit: 1500 }
+  - { min: 20,  max: 24,  unit: 1200 }
+  - { min: 25,  max: 29,  unit: 1100 }
+  - { min: 30,  max: 39,  unit: 1000 }
+  - { min: 40,  max: 49,  unit: 800 }
+  - { min: 50,  max: 59,  unit: 600 }
+  - { min: 60,  max: 69,  unit: 500 }
+  - { min: 70,  max: 79,  unit: 450 }
+  - { min: 80,  max: 89,  unit: 400 }
+  - { min: 90,  max: 99,  unit: 380 }
+  - { min: 100, max: 199, unit: 360 }
+  - { min: 200, max: 299, unit: 320 }
+  - { min: 300, max: 499, unit: 280 }
+  - { min: 500, max: 799, unit: 240 }
+  - { min: 800, max: 999, unit: 220 }
+  - { min: 1000, max: 1999, unit: 200 }
+  - { min: 2000, max: 2999, unit: 180 }
+  - { min: 3000, max: 3999, unit: 160 }
+  - { min: 4000, max: 4999, unit: 155 }
+  - { min: 5000, max: 5999, unit: 150 }
+  - { min: 6000, max: 6999, unit: 146 }
+  - { min: 7000, max: 7999, unit: 143 }
+  - { min: 8000, max: 8999, unit: 140 }
+  - { min: 9000, max: 9999, unit: 138 }
+  - { min: 10000, max: 99999, unit: 135 }
 coeff:
   finish:
     normal: 1.0
