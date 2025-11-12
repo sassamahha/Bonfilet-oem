@@ -26,32 +26,21 @@
   box-sizing: border-box;
 }
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
-  background-color: var(--color-white);
-  color: var(--color-slate-900);
-  font-family: var(--font-sans);
-  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
 a {
-  color: var(--color-brand-accent);
-  text-decoration: none;
-  transition: color 0.2s ease, text-decoration-color 0.2s ease;
 }
 
 a:hover {
   text-decoration: underline;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-  color: inherit;
 }
 
 button:focus-visible,
