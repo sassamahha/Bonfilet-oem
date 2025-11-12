@@ -31,12 +31,28 @@
     "finish": "仕上げ",
     "size": "サイズ",
     "options": "オプション",
+    "colors": {
+      "black": "ブラック",
+      "white": "ホワイト",
+      "red": "レッド",
+      "blue": "ブルー",
+      "yellow": "イエロー",
+      "green": "グリーン",
+      "pink": "ピンク",
+      "purple": "パープル",
+      "navy": "ネイビー",
+      "custom": "カスタム"
+    },
+    "customColorInput": "カスタムカラーを選択",
     "preview": "プレビュー",
     "quote": "概算見積",
     "arrival": "到着目安",
     "forbidden": "禁止ワードが含まれるため、手動承認が必要です。",
     "lengthError": "メッセージは40文字以内で入力してください。",
-    "placeholder": "ONE TEAM, ONE MESSAGE"
+    "placeholder": "ONE TEAM, ONE MESSAGE",
+    "calculating": "計算中…",
+    "quoteUnavailable": "見積を取得できません",
+    "quoteError": "見積の更新に失敗しました。再度お試しください。"
   },
   "quote": {
     "subtotal": "小計",

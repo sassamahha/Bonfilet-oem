@@ -54,18 +54,44 @@ components:
                 type: string
               bodyColor:
                 type: string
+                enum:
+                  - black
+                  - white
+                  - red
+                  - blue
+                  - yellow
+                  - green
+                  - pink
+                  - purple
+                  - navy
+                  - custom
+              bodyColorHex:
+                type: string
+                pattern: '^#[0-9A-Fa-f]{6}$'
               textColor:
                 type: string
+                enum:
+                  - black
+                  - white
+                  - red
+                  - blue
+                  - yellow
+                  - green
+                  - pink
+                  - purple
+                  - navy
+                  - custom
+              textColorHex:
+                type: string
+                pattern: '^#[0-9A-Fa-f]{6}$'
               finish:
                 type: string
                 enum:
                   - normal
-                  - glow
-                  - marble
-                  - pvc
               size:
                 type: string
-                example: 12mm/202mm
+                enum:
+                  - 12x202
               qty:
                 type: integer
                 minimum: 1

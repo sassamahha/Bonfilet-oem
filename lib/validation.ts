@@ -19,18 +19,6 @@ export class QuoteValidationError extends Error {
   }
 }
 
-const quoteItemSchema = z.object({
-  productType: z.literal('bonfilet'),
-  messageText: z.string().min(1).max(80),
-  font: z.string().optional(),
-  bodyColor: z.string(),
-  textColor: z.string(),
-  finish: z.string(),
-  size: z.string(),
-  qty: z.number().int().min(1).max(99999),
-  options: z.array(z.string()).optional()
-});
-
 const quoteSchema = z.object({
   currency: z.string().optional(),
   items: z.array(quoteItemSchema).min(1, { message: 'No item provided' }),
@@ -42,8 +30,6 @@ const quoteSchema = z.object({
   })
 });
 
-export type ParsedQuoteRequest = {
-  items: QuoteItemInput[];
   shipTo: { country: string };
   currency: string;
   needsReview: boolean;
@@ -87,11 +73,6 @@ export async function parseQuoteRequest(raw: unknown): Promise<ParsedQuoteReques
   const needsReview = messageChecks.some((check) => check.needsReview);
   const errors = messageChecks.flatMap((check) => check.errors);
 
-  const normalizedItems: QuoteItemInput[] = items.map((item) => ({
-    qty: item.qty,
-    finish: item.finish,
-    size: item.size,
-    options: item.options ?? []
   }));
 
   return {

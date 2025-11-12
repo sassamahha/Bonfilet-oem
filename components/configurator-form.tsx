@@ -2,13 +2,25 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { ColorConfig, PricingConfig } from '@/lib/data';
-import type { QuoteBreakdown } from '@/lib/pricing';
 
-export type ConfiguratorData = {
-  pricing: PricingConfig;
-  colors: ColorConfig;
-};
+import ColorPicker from '@/components/color-picker';
+import {
+  BAND_FINISHES,
+  BAND_SIZES,
+  BODY_COLORS,
+  DEFAULT_BODY_COLOR,
+  DEFAULT_FINISH,
+  DEFAULT_SIZE,
+  DEFAULT_TEXT_COLOR,
+  TEXT_COLORS,
+  resolveColorHex,
+  resolveColorLabel,
+  type BandColorId,
+  type BandFinishId,
+  type BandSizeId
+} from '@/config/band';
+import type { PricingConfig } from '@/lib/data';
+import type { QuoteBreakdown } from '@/lib/pricing';
 
 type QuoteResponse = QuoteBreakdown & {
   etaDays: [number, number];
@@ -16,55 +28,124 @@ type QuoteResponse = QuoteBreakdown & {
   errors: string[];
 };
 
-const defaultFormState = {
-  message: 'ONE TEAM, ONE MESSAGE',
-  qty: 30,
-  font: 'NotoSans',
-  bodyColor: 'black',
-  textColor: 'white',
-  finish: 'normal',
-  size: '12mm/202mm',
-  options: [] as string[],
-  country: 'US'
+type FormState = {
+  message: string;
+  qty: number;
+  country: string;
+  bodyColor: BandColorId;
+  bodyColorCustom: string;
+  textColor: BandColorId;
+  textColorCustom: string;
+  finish: BandFinishId;
+  size: BandSizeId;
 };
 
-type Props = ConfiguratorData;
+const defaultFormState: FormState = {
+  message: 'ONE TEAM, ONE MESSAGE',
+  qty: 30,
+  country: 'US',
+  bodyColor: DEFAULT_BODY_COLOR,
+  bodyColorCustom: resolveColorHex(DEFAULT_BODY_COLOR),
+  textColor: DEFAULT_TEXT_COLOR,
+  textColorCustom: resolveColorHex(DEFAULT_TEXT_COLOR),
+  finish: DEFAULT_FINISH,
+  size: DEFAULT_SIZE
+};
 
-export default function ConfiguratorForm({ pricing, colors }: Props) {
+type Props = {
+  pricing: PricingConfig;
+};
+
+export default function ConfiguratorForm({ pricing }: Props) {
   const t = useTranslations('order');
-  const [form, setForm] = useState(defaultFormState);
+  const quoteT = useTranslations('quote');
+  const [form, setForm] = useState<FormState>(() => ({
+    ...defaultFormState,
+    qty: pricing.tiers[0]?.min ?? defaultFormState.qty
+  }));
   const [quote, setQuote] = useState<QuoteResponse | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [quoteError, setQuoteError] = useState<string | null>(null);
 
-  const optionKeys = useMemo(() => Object.keys(pricing.options), [pricing.options]);
+  const getColorLabel = (color: BandColorId) =>
+    t(`colors.${color}` as const, { defaultMessage: resolveColorLabel(color) });
+
+  const bodyColorOptions = useMemo(
+    () =>
+      BODY_COLORS.map((color) => ({
+        id: color,
+        label: getColorLabel(color),
+        hex: color === 'custom' ? form.bodyColorCustom : resolveColorHex(color),
+        isCustom: color === 'custom'
+      })),
+    [form.bodyColorCustom, t]
+  );
+
+  const textColorOptions = useMemo(
+    () =>
+      TEXT_COLORS.map((color) => ({
+        id: color,
+        label: getColorLabel(color),
+        hex: color === 'custom' ? form.textColorCustom : resolveColorHex(color),
+        isCustom: color === 'custom'
+      })),
+    [form.textColorCustom, t]
+  );
 
   useEffect(() => {
     let ignore = false;
+    const controller = new AbortController();
+
     async function fetchQuote() {
       setIsLoading(true);
-      const response = await fetch('/api/quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [
-            {
-              productType: 'bonfilet',
-              messageText: form.message,
-              bodyColor: form.bodyColor,
-              textColor: form.textColor,
-              finish: form.finish,
-              size: form.size,
-              qty: form.qty,
-              options: form.options
-            }
-          ],
-          shipTo: { country: form.country }
-        })
-      });
-      const data = (await response.json()) as QuoteResponse;
-      if (!ignore) {
-        setQuote(data);
-        setIsLoading(false);
+      setQuoteError(null);
+
+      try {
+        const response = await fetch('/api/quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            items: [
+              {
+                productType: 'bonfilet',
+                messageText: form.message,
+                bodyColor: form.bodyColor,
+                textColor: form.textColor,
+                bodyColorHex: resolveColorHex(form.bodyColor, form.bodyColorCustom),
+                textColorHex: resolveColorHex(form.textColor, form.textColorCustom),
+                finish: form.finish,
+                size: form.size,
+                qty: form.qty
+              }
+            ],
+            shipTo: { country: form.country }
+          }),
+          signal: controller.signal
+        });
+
+        if (!response.ok) {
+          throw new Error('Quote request failed');
+        }
+
+        const data = (await response.json()) as QuoteResponse;
+        if (!ignore) {
+          setQuote(data);
+        }
+      } catch (error) {
+        if (ignore) {
+          return;
+        }
+
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
+
+        setQuote(null);
+        setQuoteError(t('quoteError'));
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
       }
     }
 
@@ -72,12 +153,44 @@ export default function ConfiguratorForm({ pricing, colors }: Props) {
 
     return () => {
       ignore = true;
+      controller.abort();
     };
-  }, [form.message, form.qty, form.finish, form.size, form.bodyColor, form.textColor, form.options, form.country]);
+  }, [
+    form.message,
+    form.qty,
+    form.country,
+    form.bodyColor,
+    form.textColor,
+    form.bodyColorCustom,
+    form.textColorCustom,
+    form.finish,
+    form.size,
+    t
+  ]);
+
+  const minQty = pricing.tiers[0]?.min ?? 1;
+  const maxQty = pricing.tiers[pricing.tiers.length - 1]?.max ?? 99999;
+
+  const previewBodyHex = resolveColorHex(form.bodyColor, form.bodyColorCustom);
+  const previewTextHex = resolveColorHex(form.textColor, form.textColorCustom);
+  const previewMessage = form.message.trim() || t('placeholder');
+  const sizeLabel = BAND_SIZES.find((size) => size.id === form.size)?.label ?? form.size;
+  const finishLabel = BAND_FINISHES.find((finish) => finish.id === form.finish)?.label ?? form.finish;
+
+  const formatQuoteCurrency = (amount: number) => {
+    const currency = quote?.currency ?? pricing.currency;
+    const usesZeroFraction = currency === 'JPY';
+    return new Intl.NumberFormat('ja-JP', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: usesZeroFraction ? 0 : 2,
+      maximumFractionDigits: usesZeroFraction ? 0 : 2
+    }).format(amount);
+  };
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
-      <form className="space-y-6">
+      <form className="space-y-6" aria-label="Bonfilet configurator form">
         <div>
           <label className="block text-sm font-semibold text-slate-700" htmlFor="message">
             {t('message')}
@@ -86,8 +199,13 @@ export default function ConfiguratorForm({ pricing, colors }: Props) {
             id="message"
             className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-brand-accent"
             value={form.message}
-            onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
-            maxLength={80}
+            onChange={(event) =>
+              setForm((prev) => ({
+                ...prev,
+                message: event.target.value
+              }))
+            }
+            maxLength={40}
             rows={2}
           />
           <p className="mt-1 text-xs text-slate-500">{t('placeholder')}</p>
@@ -100,11 +218,20 @@ export default function ConfiguratorForm({ pricing, colors }: Props) {
             <input
               id="quantity"
               type="number"
-              min={1}
-              max={999}
+              min={minQty}
+              max={maxQty}
               value={form.qty}
               onChange={(event) =>
-                setForm((prev) => ({ ...prev, qty: Number.parseInt(event.target.value || '0', 10) }))
+                setForm((prev) => ({
+                  ...prev,
+                  qty: (() => {
+                    const raw = Number.parseInt(event.target.value || '0', 10);
+                    if (Number.isNaN(raw)) {
+                      return prev.qty;
+                    }
+                    return Math.min(maxQty, Math.max(minQty, raw));
+                  })()
+                }))
               }
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
             />
@@ -116,127 +243,110 @@ export default function ConfiguratorForm({ pricing, colors }: Props) {
             <input
               id="country"
               value={form.country}
-              onChange={(event) => setForm((prev) => ({ ...prev, country: event.target.value.toUpperCase() }))}
+              onChange={(event) =>
+                setForm((prev) => ({
+                  ...prev,
+                  country: event.target.value.toUpperCase()
+                }))
+              }
               className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
             />
           </div>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="bodyColor">
-              {t('bodyColor')}
-            </label>
-            <select
-              id="bodyColor"
-              value={form.bodyColor}
-              onChange={(event) => setForm((prev) => ({ ...prev, bodyColor: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {colors.body.map((color) => (
-                <option key={color.id} value={color.id}>
-                  {color.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="textColor">
-              {t('textColor')}
-            </label>
-            <select
-              id="textColor"
-              value={form.textColor}
-              onChange={(event) => setForm((prev) => ({ ...prev, textColor: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {colors.text.map((color) => (
-                <option key={color.id} value={color.id}>
-                  {color.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          <ColorPicker
+            name="body-color"
+            label={t('bodyColor')}
+            options={bodyColorOptions}
+            selected={form.bodyColor}
+            customHex={form.bodyColorCustom}
+            customLabel={t('customColorInput')}
+            onSelect={(color) =>
+              setForm((prev) => ({
+                ...prev,
+                bodyColor: color
+              }))
+            }
+            onCustomChange={(hex) =>
+              setForm((prev) => ({
+                ...prev,
+                bodyColor: prev.bodyColor === 'custom' ? prev.bodyColor : 'custom',
+                bodyColorCustom: hex
+              }))
+            }
+          />
+          <ColorPicker
+            name="text-color"
+            label={t('textColor')}
+            options={textColorOptions}
+            selected={form.textColor}
+            customHex={form.textColorCustom}
+            customLabel={t('customColorInput')}
+            onSelect={(color) =>
+              setForm((prev) => ({
+                ...prev,
+                textColor: color
+              }))
+            }
+            onCustomChange={(hex) =>
+              setForm((prev) => ({
+                ...prev,
+                textColor: prev.textColor === 'custom' ? prev.textColor : 'custom',
+                textColorCustom: hex
+              }))
+            }
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="finish">
-              {t('finish')}
-            </label>
-            <select
-              id="finish"
-              value={form.finish}
-              onChange={(event) => setForm((prev) => ({ ...prev, finish: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {Object.keys(pricing.coeff.finish).map((finish) => (
-                <option key={finish} value={finish}>
-                  {finish}
-                </option>
-              ))}
-            </select>
+            <span className="block text-sm font-semibold text-slate-700">{t('size')}</span>
+            <div className="mt-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
+              {sizeLabel}
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="size">
-              {t('size')}
-            </label>
-            <select
-              id="size"
-              value={form.size}
-              onChange={(event) => setForm((prev) => ({ ...prev, size: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {Object.keys(pricing.coeff.size).map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div>
-          <span className="block text-sm font-semibold text-slate-700">{t('options')}</span>
-          <div className="mt-2 flex flex-wrap gap-4">
-            {optionKeys.map((option) => {
-              const checked = form.options.includes(option);
-              return (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-600">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(event) => {
-                      const { checked: isChecked } = event.target;
-                      setForm((prev) => ({
-                        ...prev,
-                        options: isChecked
-                          ? [...prev.options, option]
-                          : prev.options.filter((item) => item !== option)
-                      }));
-                    }}
-                  />
-                  <span>
-                    {option}
-                    <span className="ml-2 text-xs text-slate-400">
-                      +{pricing.options[option].toFixed(2)} {pricing.currency}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
+            <span className="block text-sm font-semibold text-slate-700">{t('finish')}</span>
+            <div className="mt-2 rounded-md border border-slate-200 px-3 py-2 text-sm text-slate-700">
+              {finishLabel}
+            </div>
           </div>
         </div>
       </form>
       <aside className="space-y-6 rounded-lg border border-slate-200 bg-slate-50 p-6">
         <section>
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{t('preview')}</h3>
-          <div className="mt-4 flex h-32 items-center justify-center rounded-md border border-dashed border-slate-300 bg-white">
-            <span className="text-lg font-semibold" style={{ color: form.textColor }}>
-              {form.message}
-            </span>
+          <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div
+              className="flex h-32 items-center justify-center rounded-md"
+              style={{
+                backgroundColor: previewBodyHex,
+                color: previewTextHex,
+                border: '1px solid rgba(15,23,42,0.1)'
+              }}
+            >
+              <span className="text-lg font-semibold leading-tight text-center" style={{ color: previewTextHex }}>
+                {previewMessage}
+              </span>
+            </div>
+            <dl className="mt-3 space-y-1 text-xs text-slate-600">
+              <div className="flex justify-between">
+                <dt>{t('bodyColor')}</dt>
+                <dd>{getColorLabel(form.bodyColor)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt>{t('textColor')}</dt>
+                <dd>{getColorLabel(form.textColor)}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt>{t('size')}</dt>
+                <dd>{sizeLabel}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt>{t('finish')}</dt>
+                <dd>{finishLabel}</dd>
+              </div>
+            </dl>
           </div>
-          <p className="mt-2 text-xs text-slate-500">
-            {colors.body.find((color) => color.id === form.bodyColor)?.label} ·{' '}
-            {colors.text.find((color) => color.id === form.textColor)?.label}
-          </p>
         </section>
         <section className="space-y-2">
           <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{t('quote')}</h3>
@@ -254,47 +364,36 @@ export default function ConfiguratorForm({ pricing, colors }: Props) {
               </li>
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">Calculating...</p>
+            <p className="text-sm text-slate-500">{isLoading ? t('calculating') : t('quoteUnavailable')}</p>
           )}
           {quote && (
             <div className="mt-4 space-y-2 text-sm text-slate-700">
               <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>
-                  {quote.currency} {quote.subtotal.toFixed(2)}
-                </span>
+                <span>{quoteT('subtotal')}</span>
+                <span>{formatQuoteCurrency(quote.subtotal)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>
-                  {quote.currency} {quote.shipping.toFixed(2)}
-                </span>
+                <span>{quoteT('shipping')}</span>
+                <span>{formatQuoteCurrency(quote.shipping)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Tax</span>
-                <span>
-                  {quote.currency} {quote.tax.toFixed(2)}
-                </span>
+                <span>{quoteT('tax')}</span>
+                <span>{formatQuoteCurrency(quote.tax)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Duties</span>
-                <span>
-                  {quote.currency} {quote.duties.toFixed(2)}
-                </span>
+                <span>{quoteT('duties')}</span>
+                <span>{formatQuoteCurrency(quote.duties)}</span>
               </div>
               <div className="flex justify-between font-semibold">
-                <span>Total</span>
-                <span>
-                  {quote.currency} {quote.total.toFixed(2)}
-                </span>
+                <span>{quoteT('total')}</span>
+                <span>{formatQuoteCurrency(quote.total)}</span>
               </div>
             </div>
           )}
           {isLoading && <p className="text-xs text-slate-400">Updating quote…</p>}
+          {quoteError && <p className="text-xs text-red-600">{quoteError}</p>}
           {quote?.needsReview && (
-            <p className="rounded-md border border-amber-400 bg-amber-50 p-3 text-xs text-amber-700">
-              {t('forbidden')}
-            </p>
+            <p className="rounded-md border border-amber-400 bg-amber-50 p-3 text-xs text-amber-700">{t('forbidden')}</p>
           )}
           {quote && quote.errors.length > 0 && (
             <ul className="space-y-1 text-xs text-red-600">

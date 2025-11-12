@@ -1,11 +1,9 @@
 import ConfiguratorForm from '@/components/configurator-form';
 import { DISPLAY_CURRENCIES, formatCurrency } from '@/lib/currency';
-import { getColorConfig, getPricingConfig } from '@/lib/data';
 import type { Locale } from '@/lib/i18n';
 import { getTranslations } from 'next-intl/server';
 
 export default async function OrderPage({ params }: { params: { locale: Locale } }) {
-  const [pricing, colors] = await Promise.all([getPricingConfig(), getColorConfig()]);
   const t = await getTranslations({ locale: params.locale, namespace: 'order' });
   const pricingT = await getTranslations({ locale: params.locale, namespace: 'pricing' });
   const numberFormatter = new Intl.NumberFormat(params.locale);
@@ -29,7 +27,7 @@ export default async function OrderPage({ params }: { params: { locale: Locale }
         Configure message, colors, finish and quantity. Pricing updates instantly and reflects shipping, tax and duties.
       </p>
       <div className="mt-10">
-        <ConfiguratorForm pricing={pricing} colors={colors} />
+        <ConfiguratorForm pricing={pricing} />
       </div>
       <section id="pricing" className="mt-16">
         <h2 className="text-2xl font-semibold text-slate-900">{pricingT('title')}</h2>

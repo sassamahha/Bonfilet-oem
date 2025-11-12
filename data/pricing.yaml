@@ -29,12 +29,6 @@ tiers:
 coeff:
   finish:
     normal: 1.0
-    glow: 1.15
-    marble: 1.12
-    pvc: 1.25
   size:
-    "12mm/180mm": 1.0
-    "12mm/202mm": 1.03
-    "12mm/210mm": 1.05
-options:
-  individual_pack: 0.05
+    "12x202": 1.0
+options: {}

@@ -31,12 +31,28 @@
     "finish": "Finish",
     "size": "Size",
     "options": "Options",
+    "colors": {
+      "black": "Black",
+      "white": "White",
+      "red": "Red",
+      "blue": "Blue",
+      "yellow": "Yellow",
+      "green": "Green",
+      "pink": "Pink",
+      "purple": "Purple",
+      "navy": "Navy",
+      "custom": "Custom"
+    },
+    "customColorInput": "Pick a custom color",
     "preview": "Preview",
     "quote": "Estimated totals",
     "arrival": "Estimated arrival",
     "forbidden": "Message requires manual review due to restricted words.",
     "lengthError": "Message must be 40 characters or fewer.",
-    "placeholder": "ONE TEAM, ONE MESSAGE"
+    "placeholder": "ONE TEAM, ONE MESSAGE",
+    "calculating": "Calculating…",
+    "quoteUnavailable": "Quote unavailable",
+    "quoteError": "Unable to refresh quote. Please try again."
   },
   "quote": {
     "subtotal": "Subtotal",

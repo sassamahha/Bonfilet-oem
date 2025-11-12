@@ -3,8 +3,8 @@ import type { PricingConfig } from '@/lib/data';
 
 export type QuoteItemInput = {
   qty: number;
-  finish: string;
-  size: string;
+  finish: BandFinishId;
+  size: BandSizeId;
   options?: string[];
 };
 
