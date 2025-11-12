@@ -1,6 +1,5 @@
 import { getPricingConfig } from '@/lib/data';
 import type { PricingConfig } from '@/lib/data';
-import type { BandFinishId, BandSizeId } from '@/config/band';
 
 export type QuoteItemInput = {
   qty: number;
