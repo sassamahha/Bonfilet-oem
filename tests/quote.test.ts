@@ -13,7 +13,9 @@ test('createQuote returns pricing and eta information', async () => {
         bodyColor: 'black',
         textColor: 'white',
         finish: 'normal',
-        size: '12mm/202mm',
+        size: '12x202',
+        bodyColorHex: '#111827',
+        textColorHex: '#FFFFFF',
         qty: 10,
         options: []
       }

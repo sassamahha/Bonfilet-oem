@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { getTranslator } from 'next-intl/server';
+import { getTranslations } from 'next-intl/server';
 import type { Locale } from '@/lib/i18n';
 
 export default async function MarketingPage({ params }: { params: { locale: Locale } }) {
-  const t = await getTranslator(params.locale, 'hero');
-  const cta = await getTranslator(params.locale, 'cta');
+  const t = await getTranslations({ locale: params.locale, namespace: 'hero' });
+  const cta = await getTranslations({ locale: params.locale, namespace: 'cta' });
 
   return (
     <div className="bg-gradient-to-b from-white to-slate-50">
