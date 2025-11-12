@@ -15,25 +15,22 @@
   "order": {
     "title": "Customize your Bonfilet",
     "message": "Message",
-    "quantity": "Quantity",
-    "font": "Font",
-    "bodyColor": "Body color",
+    "bodyColor": "Band color",
     "textColor": "Text color",
-    "finish": "Finish",
-    "size": "Size",
-    "options": "Options",
-    "preview": "Preview",
-    "quote": "Estimated totals",
-    "arrival": "Estimated arrival",
-    "forbidden": "Message requires manual review due to restricted words.",
-    "lengthError": "Message must be 40 characters or fewer.",
+    "quantity": "Quantity",
+    "arrival": "Destination (country code)",
+    "charsLeft": "{count} chars left",
     "placeholder": "ONE TEAM, ONE MESSAGE"
   },
   "quote": {
+    "panelTitle": "Instant quote",
     "subtotal": "Subtotal",
     "shipping": "Shipping",
-    "tax": "Tax",
-    "duties": "Duties",
-    "total": "Total"
+    "tax": "Tax/Duties",
+    "total": "Total",
+    "eta": "{from} – {to}",
+    "checkout": "Continue to checkout",
+    "empty": "Fill the form to see quote.",
+    "updating": "Updating…"
   }
 }

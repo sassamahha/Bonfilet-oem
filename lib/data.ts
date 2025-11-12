@@ -14,7 +14,8 @@ export type PricingConfig = {
     finish: Record<string, number>;
     size: Record<string, number>;
   };
-  options: Record<string, number>;
+  // e.g. options.backMessage … 将来用（存在しなくても可）
+  options?: Record<string, unknown>;
 };
 
 export type ColorConfig = {
@@ -37,13 +38,36 @@ export type LeadTimeConfig = {
 };
 
 const rootDir = process.cwd();
+const isProd = process.env.NODE_ENV === 'production';
 
-async function readYaml<T>(file: string): Promise<T> {
-  const filePath = path.join(rootDir, 'data', file);
-  const raw = await fs.readFile(filePath, 'utf8');
-  return YAML.parse(raw) as T;
+// -------- simple in-memory cache --------
+type CacheMap = Map<string, unknown>;
+const cache: CacheMap = new Map();
+
+function cacheKey(file: string) {
+  return `data:${file}`;
 }
 
+async function readFileUtf8(filePath: string) {
+  const raw = await fs.readFile(filePath, 'utf8');
+  // strip BOM if present
+  return raw.replace(/^\uFEFF/, '');
+}
+
+async function readYaml<T>(file: string): Promise<T> {
+  const key = cacheKey(file);
+  if (isProd && cache.has(key)) {
+    return cache.get(key) as T;
+  }
+  const filePath = path.join(rootDir, 'data', file);
+  const raw = await readFileUtf8(filePath);
+  const parsed = YAML.parse(raw) as T;
+  if (isProd) cache.set(key, parsed);
+  else cache.delete(key); // dev は常に最新を読む
+  return parsed;
+}
+
+// ------------- public loaders -------------
 export async function getPricingConfig(): Promise<PricingConfig> {
   return readYaml<PricingConfig>('pricing.yaml');
 }
@@ -57,10 +81,27 @@ export async function getLeadTimeConfig(): Promise<LeadTimeConfig> {
 }
 
 export async function getForbiddenWords(): Promise<string[]> {
+  const key = cacheKey('forbidden_words.txt');
+  if (isProd && cache.has(key)) {
+    return cache.get(key) as string[];
+  }
+
   const filePath = path.join(rootDir, 'data', 'forbidden_words.txt');
-  const raw = await fs.readFile(filePath, 'utf8');
-  return raw
+  const raw = await readFileUtf8(filePath);
+
+  // - 空行無視
+  // - 先頭/末尾空白トリム
+  // - # 以降はコメント扱い
+  // - CRLF/CR 正規化
+  const words = raw
+    .replace(/\r\n?/g, '\n')
     .split('\n')
-    .map((word) => word.trim().toLowerCase())
-    .filter(Boolean);
+    .map((line) => line.replace(/#.*$/, '').trim())
+    .filter(Boolean)
+    .map((w) => w.toLowerCase());
+
+  if (isProd) cache.set(key, words);
+  else cache.delete(key);
+
+  return words;
 }

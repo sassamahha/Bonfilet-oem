@@ -1,310 +1,197 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
-import type { ColorConfig, PricingConfig } from '@/lib/data';
-import type { QuoteBreakdown } from '@/lib/pricing';
+import {useEffect, useMemo, useState} from 'react';
+import {useTranslations} from 'next-intl';
+import type {Locale} from '@/lib/i18n';
+import BandPreview from '@/components/BandPreview';
+import ColorChips from '@/components/ColorChips';
 
-export type ConfiguratorData = {
-  pricing: PricingConfig;
-  colors: ColorConfig;
+type ColorsConfig = Record<string,string>;
+
+type FormState = {
+  messageText: string;
+  bodyColor: string; // hex
+  textColor: string; // hex
+  qty: number;
+  country: string;   // ISO2
 };
 
-type QuoteResponse = QuoteBreakdown & {
-  etaDays: [number, number];
-  needsReview: boolean;
-  errors: string[];
+type Quote = {
+  subtotal: number; shipping: number; taxDuties: number;
+  total: number;    currency: string;
+  eta?: {from:string; to:string};
+  validation?: {ok:boolean; errors?: string[]};
 };
 
-const defaultFormState = {
-  message: 'ONE TEAM, ONE MESSAGE',
-  qty: 30,
-  font: 'NotoSans',
-  bodyColor: 'black',
-  textColor: 'white',
-  finish: 'normal',
-  size: '12mm/202mm',
-  options: [] as string[],
-  country: 'US'
-};
+/** 便利関数 */
+const hex = (s:string)=>s.toUpperCase();
 
-type Props = ConfiguratorData;
+/** 指定の“10色(うち最後はホイール)”に合わせたクイック配列(9色ぶん) */
+const BODY_QUICK = [
+  '#000000', '#FFFFFF', '#E74C3C', '#2962FF', '#F1C40F', '#27AE60',
+].map(hex);
 
-export default function ConfiguratorForm({ pricing, colors }: Props) {
-  const t = useTranslations('order');
-  const [form, setForm] = useState(defaultFormState);
-  const [quote, setQuote] = useState<QuoteResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+const TEXT_QUICK = [
+  '#FFFFFF', '#000000', '#E74C3C', '#2962FF', '#F1C40F', '#27AE60',
+].map(hex);
 
-  const optionKeys = useMemo(() => Object.keys(pricing.options), [pricing.options]);
+export default function ConfiguratorForm({
+  colors,  // 使っていなくても互換のため受け取る
+  locale,
+}: {colors: ColorsConfig;  locale: Locale}) {
 
-  useEffect(() => {
-    let ignore = false;
-    async function fetchQuote() {
-      setIsLoading(true);
-      const response = await fetch('/api/quote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          items: [
-            {
-              productType: 'bonfilet',
-              messageText: form.message,
-              bodyColor: form.bodyColor,
-              textColor: form.textColor,
-              finish: form.finish,
-              size: form.size,
-              qty: form.qty,
-              options: form.options
-            }
-          ],
-          shipTo: { country: form.country }
-        })
-      });
-      const data = (await response.json()) as QuoteResponse;
-      if (!ignore) {
+  const tOrder = useTranslations('order');
+  const tQuote = useTranslations('quote');
+
+  const [form,setForm] = useState<FormState>({
+    messageText: 'ONE TEAM, ONE MESSAGE',
+    bodyColor: '#000000',
+    textColor: '#FFFFFF',
+    qty: 30,
+    country: (locale==='ja'?'JP':'US'),
+  });
+
+  const update = <K extends keyof FormState>(k:K)=> (v:FormState[K]) =>
+    setForm(s=>({...s,[k]:v}));
+
+  /** 見積り（ダミー連携のまま） */
+  const [quote,setQuote] = useState<Quote|null>(null);
+  const [loading,setLoading] = useState(false);
+  const [err,setErr] = useState<string|null>(null);
+
+  useEffect(()=>{
+    const t = setTimeout(async ()=>{
+      setLoading(true); setErr(null);
+      try{
+        const res = await fetch('/api/quote',{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            items:[{ productType:'bonfilet',
+                     messageText: form.messageText,
+                     bodyColor: form.bodyColor,
+                     textColor: form.textColor,
+                     qty: form.qty }],
+            shipTo:{country: form.country},
+            currency: (locale==='ja'?'JPY':'USD'),
+            locale
+          })
+        });
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data:Quote = await res.json();
         setQuote(data);
-        setIsLoading(false);
-      }
-    }
+      }catch(e:any){ setErr(e.message??'Quote failed'); setQuote(null); }
+      finally{ setLoading(false); }
+    },250);
+    return ()=>clearTimeout(t);
+  },[form.messageText, form.bodyColor, form.textColor, form.qty, form.country, locale]);
 
-    void fetchQuote();
-
-    return () => {
-      ignore = true;
-    };
-  }, [form.message, form.qty, form.finish, form.size, form.bodyColor, form.textColor, form.options, form.country]);
+  const curFmt = useMemo(
+    ()=> new Intl.NumberFormat(undefined,{style:'currency', currency: quote?.currency ?? (locale==='ja'?'JPY':'USD')}),
+    [quote?.currency, locale]
+  );
 
   return (
-    <div className="grid gap-8 lg:grid-cols-2">
-      <form className="space-y-6">
-        <div>
-          <label className="block text-sm font-semibold text-slate-700" htmlFor="message">
-            {t('message')}
-          </label>
-          <textarea
-            id="message"
-            className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 shadow-sm focus:border-brand-accent"
-            value={form.message}
-            onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
-            maxLength={80}
-            rows={2}
+    <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_360px]">
+      {/* 左側：フォーム */}
+      <div className="space-y-6">
+        <label className="block">
+          <div className="mb-1 text-sm text-sleet-600">{tOrder('message')}</div>
+          <input
+            value={form.messageText}
+            onChange={(e)=>update('messageText')(e.target.value)}
+            className="w-full rounded-md border border-slate-300 px-3 py-2"
+            placeholder={tOrder('placeholder')}
+            maxLength={46} // 半角想定。全角は実質23文字目で止める運用なら別途制御してOK
           />
-          <p className="mt-1 text-xs text-slate-500">{t('placeholder')}</p>
+          <div className="mt-1 text-xs text-slate-500">{tOrder('charsLeftUnits')}（半=1・全=2）</div>
+        </label>
+
+        {/* 10色（最後はホイール） */}
+        <div className="grid grid-cols-2 gap-6">
+          <ColorChips
+            label={tOrder('bodyColor')}
+            value={form.bodyColor}
+            onChange={hex=>update('bodyColor')(hex)}
+            quick={BODY_QUICK}
+          />
+          <ColorChips
+            label={tOrder('textColor')}
+            value={form.textColor}
+            onChange={hex=>update('textColor')(hex)}
+            quick={TEXT_QUICK}
+          />
         </div>
+
+        {/* プレビュー */}
+        <div className="max-w-[720px]">
+          <BandDiv>
+            <BandPreview
+              message={form.messageText}
+              bodyColor={form.bodyColor}
+              textColor={form.textColor}
+              maxWidth={720}
+              fit="width"
+              className="my-2"
+            />
+          </BandDiv>
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="quantity">
-              {t('quantity')}
-            </label>
-            <input
-              id="quantity"
-              type="number"
-              min={1}
-              max={999}
+          <label className="block">
+            <div className="mb-1 text-sm text-slate-600">{tOrder('quantity')}</div>
+            <input type="number" min={10} step={5}
               value={form.qty}
-              onChange={(event) =>
-                setForm((prev) => ({ ...prev, qty: Number.parseInt(event.target.value || '0', 10) }))
-              }
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
+              onChange={(e)=>update('qty')(Number(e.target.value))}
+              className="w-full rounded-md border border-slate-300 px-3 py-2"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="country">
-              Ship to country
-            </label>
+          </label>
+          <label className="block">
+            <div className="mb-1 text-sm text-slate-600">{tOrder('arrival')}</div>
             <input
-              id="country"
               value={form.country}
-              onChange={(event) => setForm((prev) => ({ ...prev, country: event.target.value.toUpperCase() }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
+              onChange={(e)=>update('country')(e.target.value.toUpperCase())}
+              className="w-full rounded-md border border-slate-300 px-3 py-2"
+              maxLength={2}
+              placeholder={locale==='ja'?'JP':'US'}
             />
-          </div>
+          </label>
         </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="bodyColor">
-              {t('bodyColor')}
-            </label>
-            <select
-              id="bodyColor"
-              value={form.bodyColor}
-              onChange={(event) => setForm((prev) => ({ ...prev, bodyColor: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {colors.body.map((color) => (
-                <option key={color.id} value={color.id}>
-                  {color.label}
-                </option>
-              ))}
-            </select>
+      </div>
+
+      {/* 右側：見積り */}
+      <aside className="sticky top-8 h-max rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-3 text-sm font-medium text-slate-500">{tQuote('panelTitle')}</div>
+        {loading && <div className="text-slate-500">{tQuote('updating')}</div>}
+        {err && <div className="rounded-md bg-rose-50 p-2 text-sm text-rose-700">{err}</div>}
+        {quote && (
+          <div className="space-y-2 text-sm">
+            <Row label={tQuote('subtotal')} val={curFmt.format(quote.subtotal)} />
+            <Row label={tQuote('shipping')} val={curFmt.format(quote.shipping)} />
+            <Row label={tQuote('tax')}      val={curFmt.format(quote.taxDuties)} />
+            <hr />
+            <Row label={tQuote('total')}    val={curFmt.format(quote.total)} strong />
+            {quote.eta && <div className="mt-2 text-slate-600">{tQuote('eta',{from:quote.eta.from,to:quote.eta.to})}</div>}
+            <button className="mt-3 w-full rounded-md bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
+                    disabled={quote.validation && !quote.validation.ok}
+                    onClick={()=>alert('Next: /api/checkout')}>{tQuote('checkout')}</button>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="textColor">
-              {t('textColor')}
-            </label>
-            <select
-              id="textColor"
-              value={form.textColor}
-              onChange={(event) => setForm((prev) => ({ ...prev, textColor: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {colors.text.map((color) => (
-                <option key={color.id} value={color.id}>
-                  {color.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="finish">
-              {t('finish')}
-            </label>
-            <select
-              id="finish"
-              value={form.finish}
-              onChange={(event) => setForm((prev) => ({ ...prev, finish: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {Object.keys(pricing.coeff.finish).map((finish) => (
-                <option key={finish} value={finish}>
-                  {finish}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-semibold text-slate-700" htmlFor="size">
-              {t('size')}
-            </label>
-            <select
-              id="size"
-              value={form.size}
-              onChange={(event) => setForm((prev) => ({ ...prev, size: event.target.value }))}
-              className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 focus:border-brand-accent"
-            >
-              {Object.keys(pricing.coeff.size).map((size) => (
-                <option key={size} value={size}>
-                  {size}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        <div>
-          <span className="block text-sm font-semibold text-slate-700">{t('options')}</span>
-          <div className="mt-2 flex flex-wrap gap-4">
-            {optionKeys.map((option) => {
-              const checked = form.options.includes(option);
-              return (
-                <label key={option} className="flex items-center gap-2 text-sm text-slate-600">
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={(event) => {
-                      const { checked: isChecked } = event.target;
-                      setForm((prev) => ({
-                        ...prev,
-                        options: isChecked
-                          ? [...prev.options, option]
-                          : prev.options.filter((item) => item !== option)
-                      }));
-                    }}
-                  />
-                  <span>
-                    {option}
-                    <span className="ml-2 text-xs text-slate-400">
-                      +{pricing.options[option].toFixed(2)} {pricing.currency}
-                    </span>
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-        </div>
-      </form>
-      <aside className="space-y-6 rounded-lg border border-slate-200 bg-slate-50 p-6">
-        <section>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{t('preview')}</h3>
-          <div className="mt-4 flex h-32 items-center justify-center rounded-md border border-dashed border-slate-300 bg-white">
-            <span className="text-lg font-semibold" style={{ color: form.textColor }}>
-              {form.message}
-            </span>
-          </div>
-          <p className="mt-2 text-xs text-slate-500">
-            {colors.body.find((color) => color.id === form.bodyColor)?.label} ·{' '}
-            {colors.text.find((color) => color.id === form.textColor)?.label}
-          </p>
-        </section>
-        <section className="space-y-2">
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-slate-500">{t('quote')}</h3>
-          {quote ? (
-            <ul className="space-y-1 text-sm text-slate-700">
-              <li className="flex justify-between">
-                <span>{t('quantity')}</span>
-                <span>{form.qty}</span>
-              </li>
-              <li className="flex justify-between">
-                <span>{t('arrival')}</span>
-                <span>
-                  {quote.etaDays[0]}–{quote.etaDays[1]} days
-                </span>
-              </li>
-            </ul>
-          ) : (
-            <p className="text-sm text-slate-500">Calculating...</p>
-          )}
-          {quote && (
-            <div className="mt-4 space-y-2 text-sm text-slate-700">
-              <div className="flex justify-between">
-                <span>Subtotal</span>
-                <span>
-                  {quote.currency} {quote.subtotal.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Shipping</span>
-                <span>
-                  {quote.currency} {quote.shipping.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Tax</span>
-                <span>
-                  {quote.currency} {quote.tax.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Duties</span>
-                <span>
-                  {quote.currency} {quote.duties.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between font-semibold">
-                <span>Total</span>
-                <span>
-                  {quote.currency} {quote.total.toFixed(2)}
-                </span>
-              </div>
-            </div>
-          )}
-          {isLoading && <p className="text-xs text-slate-400">Updating quote…</p>}
-          {quote?.needsReview && (
-            <p className="rounded-md border border-amber-400 bg-amber-50 p-3 text-xs text-amber-700">
-              {t('forbidden')}
-            </p>
-          )}
-          {quote && quote.errors.length > 0 && (
-            <ul className="space-y-1 text-xs text-red-600">
-              {quote.errors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
-          )}
-        </section>
+        )}
+        {!quote && !loading && !err && <div className="text-slate-500">{tQuote('empty')}</div>}
       </aside>
     </div>
   );
+}
+
+function Row({label,val, strong=false}:{label:string; val:string; strong?:boolean}){
+  return (
+    <div className="flex items-center justify-between">
+      <span className={`text-slate-600 ${strong?'font-semibold text-slate-900':''}`}>{label}</span>
+      <span className={`tabular-nums ${strong?'font-semibold text-slate-900':''}`}>{val}</span>
+    </div>
+  );
+}
+
+function BandDiv({children}:{children:React.ReactNode}) {
+  return <div className="my-2 rounded-xl bg-slate-100 p-8">{children}</div>;
 }
