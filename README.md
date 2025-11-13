@@ -26,9 +26,11 @@ curl -X POST http://localhost:3000/api/quote \
       "productType": "bonfilet",
       "messageText": "ONE TEAM, ONE MESSAGE",
       "bodyColor": "black",
+      "bodyColorHex": "#111827",
       "textColor": "white",
+      "textColorHex": "#FFFFFF",
       "finish": "normal",
-      "size": "12mm/202mm",
+      "size": "12x202",
       "qty": 30
     }],
     "shipTo": { "country": "US" }

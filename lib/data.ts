@@ -9,6 +9,7 @@ export type PricingTier = {
 };
 
 export type PricingConfig = {
+  currency: string;
   tiers: PricingTier[];
   coeff: {
     finish: Record<string, number>;
