@@ -20,23 +20,6 @@ const FX_RATES: Record<DisplayCurrency, number> = {
   AUD: 0.0098
 };
 
-export function getFxRate(currency: DisplayCurrency): number {
-  return FX_RATES[currency];
-}
-
-export function convertFromJPY(amountJPY: number, currency: DisplayCurrency): number {
-  const rate = getFxRate(currency);
-  return amountJPY * rate;
-}
-
-export function convertToJPY(amount: number, currency: DisplayCurrency): number {
-  const rate = getFxRate(currency);
-  if (rate === 0) {
-    return 0;
-  }
-  return amount / rate;
-}
-
 export function formatCurrency(amountJPY: number, currency: DisplayCurrency, locale: Locale): string {
   const amount = convertFromJPY(amountJPY, currency);
   const usesZeroFraction = currency === BASE_CURRENCY;

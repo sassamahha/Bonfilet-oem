@@ -1,11 +1,9 @@
 import ConfiguratorForm from '@/components/configurator-form';
 import { DISPLAY_CURRENCIES, formatCurrency } from '@/lib/currency';
-import { getPricing } from '@/lib/pricing';
 import type { Locale } from '@/lib/i18n';
 import { getTranslations } from 'next-intl/server';
 
 export default async function OrderPage({ params }: { params: { locale: Locale } }) {
-  const pricing = await getPricing(params.locale);
   const t = await getTranslations({ locale: params.locale, namespace: 'order' });
   const pricingT = await getTranslations({ locale: params.locale, namespace: 'pricing' });
   const numberFormatter = new Intl.NumberFormat(params.locale);
