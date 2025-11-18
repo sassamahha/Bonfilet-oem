@@ -1,7 +1,6 @@
 import { z } from 'zod';
 
 import { getForbiddenWords } from '@/lib/data';
-import type { QuoteItemInput } from '@/lib/pricing';
 
 export type MessageValidationResult = {
   isValid: boolean;
@@ -19,8 +18,6 @@ export class QuoteValidationError extends Error {
   }
 }
 
-const quoteSchema = z.object({
-  currency: z.string().optional(),
   items: z.array(quoteItemSchema).min(1, { message: 'No item provided' }),
   shipTo: z.object({
     country: z.string().min(2),
@@ -30,8 +27,6 @@ const quoteSchema = z.object({
   })
 });
 
-  shipTo: { country: string };
-  currency: string;
   needsReview: boolean;
   errors: string[];
 };
@@ -78,7 +73,6 @@ export async function parseQuoteRequest(raw: unknown): Promise<ParsedQuoteReques
   return {
     items: normalizedItems,
     shipTo: { country: shipTo.country.toUpperCase() },
-    currency: currency ?? 'JPY',
     needsReview,
     errors
   };

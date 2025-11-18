@@ -35,34 +35,6 @@ body {
 a {
 }
 
-button:focus-visible,
-[role='button']:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid var(--color-brand-accent);
-  outline-offset: 2px;
-}
-
-img,
-svg {
-  display: block;
-  max-width: 100%;
-  height: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 0;
-  text-align: inherit;
-}
-
 /* Spacing utilities */
 .mx-auto { margin-left: auto; margin-right: auto; }
 .mt-1 { margin-top: 0.25rem; }
